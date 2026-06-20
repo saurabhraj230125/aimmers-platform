@@ -12,7 +12,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       "addressRegion": "Jharkhand",
       "addressCountry": "IN"
     },
-    "description": "Premier coaching institute in Bokaro for JEE, SAT, and Board exam preparation.",
+    "description": "Premier coaching institute in Bokaro for JEE, Commerce, and Board exam preparation.",
     "url": "https://aimersinstitute.com",
     "telephone": "+91-9999999999" // Update with your actual number
   };

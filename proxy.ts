@@ -25,21 +25,39 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
 
-  // 1. If nobody is logged in, protect the private folders
-  if (!user && (path.startsWith('/dashboard') || path.startsWith('/admin'))) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // 1. If NOT logged in, protect private spaces
+  if (!user) {
+    if (path.startsWith('/dashboard') || path.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    return supabaseResponse;
   }
 
-  // 2. The Fix: ONLY redirect to dashboard if they are on the login or home page
-  if (user && (path === '/' || path === '/login')) {
+  // 2. If logged in, fetch their real database role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  const userRole = profile?.role || 'student';
+
+  // 3. Smart routing if they hit the home page or login page while already logged in
+  if (path === '/' || path === '/login') {
+    if (userRole === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // 3. ALLOW them to pass through safely to /admin or /dashboard
+  // 4. Strict Role-Based Protection (Prevents students from typing /admin manually)
+  if (path.startsWith('/admin') && userRole !== 'admin') {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
   return supabaseResponse;
 }
 
-// Tell Next.js which paths to run this security check on
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
