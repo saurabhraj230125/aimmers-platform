@@ -39,7 +39,13 @@ export async function login(formData: FormData) {
     return redirect('/login?message=Incorrect email or password');
   }
 
-  // 3. Fetch their exact role from the database
+  // ⭐ THE MASTER BYPASS ⭐
+  // IMPORTANT: Change the email below to your actual admin login email!
+  if (data.user.email === 'your_admin_email@example.com') {
+    return redirect('/admin'); 
+  }
+
+  // 3. Fetch their exact role from the database for everyone else
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')

@@ -33,14 +33,25 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // 2. If logged in, fetch their real database role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // ⭐ THE MASTER BYPASS ⭐
+  // IMPORTANT: Change the email below to your exact admin email!
+  const isMasterAdmin = user.email === 'your_admin_email@example.com';
+  
+  // Default to student unless they are the master admin
+  let userRole = isMasterAdmin ? 'admin' : 'student';
 
-  const userRole = profile?.role || 'student';
+  // 2. If NOT the master admin, check the database for their real role
+  if (!isMasterAdmin) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+      
+    if (profile?.role) {
+      userRole = profile.role;
+    }
+  }
 
   // 3. Smart routing if they hit the home page or login page while already logged in
   if (path === '/' || path === '/login') {
